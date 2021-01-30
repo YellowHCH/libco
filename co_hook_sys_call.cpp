@@ -49,6 +49,7 @@
 typedef long long ll64_t;
 
 struct rpchook_t
+
 {
 	int user_flag;
 	struct sockaddr_in dest; //maybe sockaddr_un;
@@ -62,6 +63,7 @@ static inline pid_t GetPid()
 	char **p = (char**)pthread_self();
 	return p ? *(pid_t*)(p + 18) : getpid();
 }
+// 映射fd和rpc，通过hook系统调用封装对g_rpchook_socket_fd的处理
 static rpchook_t *g_rpchook_socket_fd[ 102400 ] = { 0 };
 
 typedef int (*socket_pfn_t)(int domain, int type, int protocol);
@@ -350,6 +352,7 @@ ssize_t read( int fd, void *buf, size_t nbyte )
 	pf.fd = fd;
 	pf.events = ( POLLIN | POLLERR | POLLHUP );
 
+        // sleep
 	int pollret = poll( &pf,1,timeout );
 
 	ssize_t readret = g_sys_read_func( fd,(char*)buf ,nbyte );
@@ -371,6 +374,8 @@ ssize_t write( int fd, const void *buf, size_t nbyte )
 	{
 		return g_sys_write_func( fd,buf,nbyte );
 	}
+        // 由fd获取rpchook, fd 是索引，直接从数组中获取lp指针, lp指针指向的对象
+        // 主要就是socket连接对象的一些信息
 	rpchook_t *lp = get_by_fd( fd );
 
 	if( !lp || ( O_NONBLOCK & lp->user_flag ) )
@@ -581,6 +586,7 @@ int poll(struct pollfd fds[], nfds_t nfds, int timeout)
 	if (!co_is_enable_sys_hook() || timeout == 0) {
 		return g_sys_poll_func(fds, nfds, timeout);
 	}
+        // 下面剔除相同的fd
 	pollfd *fds_merge = NULL;
 	nfds_t nfds_merge = 0;
 	std::map<int, int> m;  // fd --> idx
@@ -601,8 +607,10 @@ int poll(struct pollfd fds[], nfds_t nfds, int timeout)
 
 	int ret = 0;
 	if (nfds_merge == nfds || nfds == 1) {
+                // 如果没有重复的fd
 		ret = co_poll_inner(co_get_epoll_ct(), fds, nfds, timeout, g_sys_poll_func);
 	} else {
+                // 有重复的fd
 		ret = co_poll_inner(co_get_epoll_ct(), fds_merge, nfds_merge, timeout,
 				g_sys_poll_func);
 		if (ret > 0) {

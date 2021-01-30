@@ -85,8 +85,11 @@ static void *readwrite_routine( void *arg )
 			struct pollfd pf = { 0 };
 			pf.fd = fd;
 			pf.events = (POLLIN|POLLERR|POLLHUP);
+                        // 挂起，等待可读事件
 			co_poll( co_get_epoll_ct(),&pf,1,1000);
 
+                        // 这里不需要同步操作，co_poll自动管理当前协程的执行和挂起，当pf可读时自然
+                        // 激活当前协程
 			int ret = read( fd,buf,sizeof(buf) );
 			if( ret > 0 )
 			{
@@ -103,6 +106,7 @@ static void *readwrite_routine( void *arg )
 	}
 	return 0;
 }
+// 监听到连接请求，创建通信fd，分配一个task给这个连接
 int co_accept(int fd, struct sockaddr *addr, socklen_t *len );
 static void *accept_routine( void * )
 {

@@ -25,6 +25,7 @@ struct coctx_param_t
 	const void *s1;
 	const void *s2;
 };
+// 函数调用栈的上下文，即寄存器和栈地址 栈大小
 struct coctx_t
 {
 #if defined(__i386__)
@@ -38,5 +39,19 @@ struct coctx_t
 };
 
 int coctx_init( coctx_t *ctx );
+// coctx_t --> regs[0]
+//         --> regs[1]
+//         --> ...
+//         --> regs[7] ---------------
+//         --> ...                   |
+//         --> ss_size               |
+//         --> ss_sp --> --------|   |
+//                       |_______|   |
+//                       |_______|   |
+//                       |_______|   |
+//                       |_______|   |
+//                       .........<--|
+//                       |___s1__| 
+//                       |___s2__|
 int coctx_make( coctx_t *ctx,coctx_pfn_t pfn,const void *s,const void *s1 );
 #endif

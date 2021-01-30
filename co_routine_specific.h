@@ -41,6 +41,7 @@ int main()
 	return 0;
 }
 */
+// 单例模式模板
 extern int 	co_setspecific( pthread_key_t key, const void *value );
 extern void *	co_getspecific( pthread_key_t key );
 

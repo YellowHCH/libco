@@ -32,13 +32,20 @@
 
 struct co_epoll_res
 {
-	int size;
-	struct epoll_event *events;
-	struct kevent *eventlist;
+	int size;                       // 激活的事件数量
+	struct epoll_event *events;     // 事件数组，包含1.事件类型；2.数据(事件描述符，数据指针，4字节和8字节的两个字段)
+	struct kevent *eventlist;       // 这个可能是用来适配不同操作系统的，是不是可以用union结构体减少内存占用
 };
+// 封装epoll_wait，events实际传入的参数是events->events
 int 	co_epoll_wait( int epfd,struct co_epoll_res *events,int maxevents,int timeout );
+// 注册epoll事件，epoll_event结构体包含1.事件类型2.和epoll_data
 int 	co_epoll_ctl( int epfd,int op,int fd,struct epoll_event * );
 int 	co_epoll_create( int size );
+// epoll_result -->
+//                 size: n
+//                 event[0]
+//                 event[1]
+//                 ...
 struct 	co_epoll_res *co_epoll_res_alloc( int n );
 void 	co_epoll_res_free( struct co_epoll_res * );
 

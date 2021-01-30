@@ -34,7 +34,7 @@ int loop(void *)
 static void *routine_func( void * )
 {
 	stCoEpoll_t * ev = co_get_epoll_ct(); //ct = current thread
-	co_eventloop( ev,loop,0 );
+	co_eventloop( ev,loop,0 ); // 此例子中ev没有注册时间，一直循环执行loop()
 	return 0;
 }
 int main(int argc,char *argv[])

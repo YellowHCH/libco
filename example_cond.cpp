@@ -28,7 +28,7 @@ struct stTask_t
 };
 struct stEnv_t
 {
-	stCoCond_t* cond;
+	stCoCond_t* cond;       // use condition to solve race condition
 	queue<stTask_t*> task_queue;
 };
 void* Producer(void* args)
@@ -38,6 +38,7 @@ void* Producer(void* args)
 	int id = 0;
 	while (true)
 	{
+                // calloc不同于malloc会初始化内存为0
 		stTask_t* task = (stTask_t*)calloc(1, sizeof(stTask_t));
 		task->id = id++;
 		env->task_queue.push(task);
@@ -47,14 +48,18 @@ void* Producer(void* args)
 	}
 	return NULL;
 }
+// 从队列中取出一个数据并释放内存
 void* Consumer(void* args)
 {
 	co_enable_hook_sys();
 	stEnv_t* env = (stEnv_t*)args;
 	while (true)
 	{
+                // 测试中仅一个consumer，所以这里用if而不是while，但是改成while应该更好
+                // while (env->task_queue.empty())
 		if (env->task_queue.empty())
 		{
+                        // 将当前协程挂起到cocond对象链表，然后交出执行权
 			co_cond_timedwait(env->cond, -1);
 			continue;
 		}
@@ -77,7 +82,7 @@ int main()
 	stCoRoutine_t* producer_routine;
 	co_create(&producer_routine, NULL, Producer, env);
 	co_resume(producer_routine);
-	
+        // 启动事件循环，不断调度创建的协程	
 	co_eventloop(co_get_epoll_ct(), NULL, NULL);
 	return 0;
 }

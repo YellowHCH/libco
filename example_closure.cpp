@@ -24,15 +24,17 @@
 #include <unistd.h>
 using namespace std;
 
+// 线程函数直接调用闭包的exec方法
 static void *thread_func( void * arg )
 {
 	stCoClosure_t *p = (stCoClosure_t*) arg;
 	p->exec();
 	return 0;
 }
+// 批量运行闭包队列中的任务
 static void batch_exec( vector<stCoClosure_t*> &v )
 {
-	vector<pthread_t> ths;
+	vector<pthread_t> ths; // vector for record thread id
 	for( size_t i=0;i<v.size();i++ )
 	{
 		pthread_t tid;
@@ -46,16 +48,22 @@ static void batch_exec( vector<stCoClosure_t*> &v )
 }
 int main( int argc,char *argv[] )
 {
+        printf("测试闭包函数\n");
 	vector< stCoClosure_t* > v;
 
 	pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER;
 
 	int total = 100;
 	vector<int> v2;
-	co_ref( ref,total,v2,m);
+	co_ref( ref,total,v2,m);        // 生成 type_ref 引用类型的ref对象
+        // class type_ref 的成员变量是引用类型的，即用于对传入参数的引用进行操作
+        // 此处ref对象对total,v2,m三个变量进行打包，提供给后面的闭包函数通过引用进行
+        // 操作
+        // 构造10个闭包往数组v2中添加数据
 	for(int i=0;i<10;i++)
 	{
-		co_func( f,ref,i )
+		co_func( f,ref,i )      // generate class f
+                // exec() impl
 		{
 			printf("ref.total %d i %d\n",ref.total,i );
 			//lock
@@ -67,6 +75,7 @@ int main( int argc,char *argv[] )
 		co_func_end;
 		v.push_back( new f( ref,i ) );
 	}
+        // 构造两个闭包打印矩阵 
 	for(int i=0;i<2;i++)
 	{
 		co_func( f2,i )

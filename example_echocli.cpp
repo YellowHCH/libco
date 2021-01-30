@@ -108,10 +108,12 @@ static void *readwrite_routine( void *arg )
 	char buf[ 1024 * 16 ];
 	int fd = -1;
 	int ret = 0;
+        // 和服务端创建一个连接，不断echo，如果socket失败了则重新创建
 	for(;;)
 	{
 		if ( fd < 0 )
 		{
+                        // 创建client并连接服务端
 			fd = socket(PF_INET, SOCK_STREAM, 0);
 			struct sockaddr_in addr;
 			SetAddr(endpoint->ip, endpoint->port, addr);
@@ -122,7 +124,8 @@ static void *readwrite_routine( void *arg )
 				struct pollfd pf = { 0 };
 				pf.fd = fd;
 				pf.events = (POLLOUT|POLLERR|POLLHUP);
-				co_poll( co_get_epoll_ct(),&pf,1,200);
+				// 将当前的tcp连接描述符添加到当前线程的epoll管理
+                                co_poll( co_get_epoll_ct(),&pf,1,200);
 				//check connect
 				int error = 0;
 				uint32_t socklen = sizeof(error);
@@ -184,8 +187,8 @@ int main(int argc,char *argv[])
 	stEndPoint endpoint;
 	endpoint.ip = argv[1];
 	endpoint.port = atoi(argv[2]);
-	int cnt = atoi( argv[3] );
-	int proccnt = atoi( argv[4] );
+	int cnt = atoi( argv[3] );      // 每个进程中协程数量
+	int proccnt = atoi( argv[4] );  // 开启的进程数量
 	
 	struct sigaction sa;
 	sa.sa_handler = SIG_IGN;

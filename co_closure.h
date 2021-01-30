@@ -28,6 +28,7 @@ public:
 //1.base 
 //-- 1.1 comac_argc
 
+// get args number && join two string, at most 7 arguements
 #define comac_get_args_cnt( ... ) comac_arg_n( __VA_ARGS__ )
 #define comac_arg_n( _0,_1,_2,_3,_4,_5,_6,_7,N,...) N
 #define comac_args_seqs() 7,6,5,4,3,2,1,0
@@ -37,6 +38,7 @@ public:
 #define comac_join( x,y) comac_join_1( x,y )
 
 //-- 1.2 repeat
+// at most repeat 6 times, hard coding, hhh
 #define repeat_0( fun,a,... ) 
 #define repeat_1( fun,a,... ) fun( 1,a,__VA_ARGS__ ) repeat_0( fun,__VA_ARGS__ )
 #define repeat_2( fun,a,... ) fun( 2,a,__VA_ARGS__ ) repeat_1( fun,__VA_ARGS__ )
@@ -48,6 +50,7 @@ public:
 #define repeat( n,fun,... ) comac_join( repeat_,n )( fun,__VA_ARGS__)
 
 //2.implement
+// auto generate code 
 #if __cplusplus <= 199711L
 #define decl_typeof( i,a,... ) typedef typeof( a ) typeof_##a;
 #else
@@ -60,7 +63,7 @@ public:
 
 
 //2.1 reference
-
+// auto generate reference object
 #define co_ref( name,... )\
 repeat( comac_argc(__VA_ARGS__) ,decl_typeof,__VA_ARGS__ )\
 class type_##name\

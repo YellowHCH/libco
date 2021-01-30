@@ -43,11 +43,14 @@ void* RoutineFunc(void* args)
 
 int main()
 {
+        // 申请128k大小的一块共享栈
 	stShareStack_t* share_stack= co_alloc_sharestack(1, 1024 * 128);
-	stCoRoutineAttr_t attr;
+	// 协程属性对象，包含共享栈地址和大小
+        stCoRoutineAttr_t attr;
 	attr.stack_size = 0;
 	attr.share_stack = share_stack;
 
+        // 启动两个协程，共享一个栈
 	stCoRoutine_t* co[2];
 	int routineid[2];
 	for (int i = 0; i < 2; i++)

@@ -51,10 +51,10 @@ void    co_yield( stCoRoutine_t *co );
 void    co_yield_ct(); //ct = current thread
 void    co_release( stCoRoutine_t *co );
 void    co_reset(stCoRoutine_t * co); 
-
+// 获取当前线程获得执行权的协程
 stCoRoutine_t *co_self();
 
-int		co_poll( stCoEpoll_t *ctx,struct pollfd fds[], nfds_t nfds, int timeout_ms );
+int	co_poll( stCoEpoll_t *ctx,struct pollfd fds[], nfds_t nfds, int timeout_ms );
 void 	co_eventloop( stCoEpoll_t *ctx,pfn_co_eventloop_t pfn,void *arg );
 
 //3.specific
