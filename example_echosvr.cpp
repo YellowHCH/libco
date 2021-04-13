@@ -70,6 +70,7 @@ static void *readwrite_routine( void *arg )
 	char buf[ 1024 * 16 ];
 	for(;;)
 	{
+		// current task is free, push to global task stack ant jump
 		if( -1 == co->fd )
 		{
 			g_readwrite.push( co );

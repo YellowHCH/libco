@@ -33,5 +33,9 @@ README.md
 *.out
 *.app
 
-# Tags File
+build/
 tags
+cscope*
+GPATH
+GTAGS
+GRTAGS
