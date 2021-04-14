@@ -19,25 +19,38 @@
 #ifndef __CO_CTX_H__
 #define __CO_CTX_H__
 #include <stdlib.h>
+// 协程上下文切换
 typedef void* (*coctx_pfn_t)( void* s, void* s2 );
+// coctx_param_t是栈的顶部两个指针，一个是函数入口，一个应该是返回入口
 struct coctx_param_t
 {
 	const void *s1;
 	const void *s2;
 };
 // 函数调用栈的上下文，即寄存器和栈地址 栈大小
+// 协程的上下文：
+// regs寄存器
+// ss_sp栈地址
+/*
+ *	------------
+ *	|  regs[]  |
+ *	|----------|
+ *	|  ss_sp   |
+ *	|----------|
+ * */ 
 struct coctx_t
 {
 #if defined(__i386__)
-	void *regs[ 8 ];
+	void *regs[ 8 ];	// 32位系统的寄存器大小是8
 #else
-	void *regs[ 14 ];
+	void *regs[ 14 ];	// 64为系统的寄存器大小是14
 #endif
 	size_t ss_size;
 	char *ss_sp;
 	
 };
 
+// 初始化协程上下文
 int coctx_init( coctx_t *ctx );
 // coctx_t --> regs[0]
 //         --> regs[1]
@@ -53,5 +66,6 @@ int coctx_init( coctx_t *ctx );
 //                       .........<--|
 //                       |___s1__| 
 //                       |___s2__|
+// 创建一个协程上下文，参数是：协程上下文地址，执行的函数地址...
 int coctx_make( coctx_t *ctx,coctx_pfn_t pfn,const void *s,const void *s1 );
 #endif

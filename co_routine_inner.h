@@ -21,12 +21,15 @@
 
 #include "co_routine.h"
 #include "coctx.h"
+/// 内部接口
 struct stCoRoutineEnv_t;
+// 协程私有变量的通用指针，用于key-stCoSpec_t 
 struct stCoSpec_t
 {
 	void *value;
 };
 
+// 栈内存
 struct stStackMem_t
 {
 	stCoRoutine_t* occupy_co;       // 当前占用共享栈的协程对象指针
@@ -65,12 +68,12 @@ struct stCoRoutine_t
 	//char sRunStack[ 1024 * 128 ];
 	stStackMem_t* stack_mem; // 指向当前协程使用的共享栈
 
-
 	//save satck buffer while confilct on same stack_buffer;
 	char* stack_sp; 
 	unsigned int save_size;
 	char* save_buffer;
 
+	// 维护协程私有变量映射表，限制了1024个-_-
 	stCoSpec_t aSpec[1024];
 
 };
@@ -127,6 +130,7 @@ void    co_yield_env(  stCoRoutineEnv_t *env );
                         //                                                                                  --> pfn立即处理
                         //                                                                                  --> pfn的参数
                         //                                                                                  --> 释放超时bTimeout
+// TODO
 struct stTimeout_t;
 struct stTimeoutItem_t ;
 
@@ -141,8 +145,8 @@ stCoEpoll_t *   AllocEpoll();
 void            FreeEpoll( stCoEpoll_t *ctx );
 
 stCoRoutine_t *		GetCurrThreadCo();
-void 			SetEpoll( stCoRoutineEnv_t *env,stCoEpoll_t *ev );
-
+void 				SetEpoll( stCoRoutineEnv_t *env,stCoEpoll_t *ev );
+// 协程运行函数原型
 typedef void (*pfnCoRoutineFunc_t)();
 
 #endif

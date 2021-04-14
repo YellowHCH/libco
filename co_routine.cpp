@@ -45,19 +45,19 @@ extern "C"
 	extern void coctx_swap( coctx_t *,coctx_t* ) asm("coctx_swap");
 };
 using namespace std;
+// 获取当前线程中在执行的协程
 stCoRoutine_t *GetCurrCo( stCoRoutineEnv_t *env );
 struct stCoEpoll_t;
 
 struct stCoRoutineEnv_t
 {
-        // 一个线程最多调度128个协程吗
-	stCoRoutine_t *pCallStack[ 128 ];
-	int iCallStackSize;
-	stCoEpoll_t *pEpoll;
+	stCoRoutine_t *pCallStack[ 128 ]; // 看这意思一个线程最多支持128个协程
+	int iCallStackSize;		// 表示的是线程中协程的数量
+	stCoEpoll_t *pEpoll;	// 用于协程调度的epoll事件循环
 
 	//for copy stack log lastco and nextco
-	stCoRoutine_t* pending_co;
-	stCoRoutine_t* occupy_co;
+	stCoRoutine_t* pending_co;	// ?
+	stCoRoutine_t* occupy_co;	// ?
 };
 //int socket(int domain, int type, int protocol);
 void co_log_err( const char *fmt,... )
@@ -68,6 +68,7 @@ void co_log_err( const char *fmt,... )
 #if defined( __LIBCO_RDTSCP__) 
 static unsigned long long counter(void)
 {
+	// register 修饰变量，告诉编译器尽量把变量放在寄存器中，因为变量可能会被频繁访问
 	register uint32_t lo, hi;
 	register unsigned long long o;
 	__asm__ __volatile__ (
@@ -78,6 +79,7 @@ static unsigned long long counter(void)
 	return (o | lo);
 
 }
+// 从系统配置信息中读取CPU的freq
 static unsigned long long getCpuKhz()
 {
 	FILE *fp = fopen("/proc/cpuinfo","r");
@@ -536,25 +538,25 @@ int co_create( stCoRoutine_t **ppco,const stCoRoutineAttr_t *attr,pfn_co_routine
 }
 void co_free( stCoRoutine_t *co )
 {
-        // 如果不是共享栈，释放私有栈内存
-        if (!co->cIsShareStack) 
-        {    
-                free(co->stack_mem->stack_buffer);
-                free(co->stack_mem);
-        }   
-        //walkerdu fix at 2018-01-20
-        //存在内存泄漏
-        else 
-        {
-                // 如果使用共享栈，需要释放暂存的buffer
-                if(co->save_buffer)
-                    free(co->save_buffer);
-                // 如果共享栈是被当前协程占用，则注释
-                if(co->stack_mem->occupy_co == co)
-                    co->stack_mem->occupy_co = NULL;
-        }
+    if (!co->cIsShareStack) 
+    {    
+        free(co->stack_mem->stack_buffer);
+        free(co->stack_mem);
+    }   
+    //walkerdu fix at 2018-01-20
+    //存在内存泄漏
+    else 
+    {
+		// 假如协程栈内存暂存到buffer中，则释放
+        if(co->save_buffer)
+            free(co->save_buffer);
 
-        free( co );
+		// 协程指向的栈被当前协程占用，则断开连接，共享栈不需要释放
+        if(co->stack_mem->occupy_co == co)
+            co->stack_mem->occupy_co = NULL;
+    }
+
+    free( co );
 }
 void co_release( stCoRoutine_t *co )
 {
@@ -766,6 +768,7 @@ static short EpollEvent2Poll( uint32_t events )
 	return e;
 }
 
+// 必然是线程私有的 全局协程资源环境
 static __thread stCoRoutineEnv_t* gCoEnvPerThread = NULL;
 
 void co_init_curr_thread_env()
@@ -774,7 +777,7 @@ void co_init_curr_thread_env()
 	stCoRoutineEnv_t *env = gCoEnvPerThread;
 
 	env->iCallStackSize = 0;
-        // 初始化协程调用栈stCoRoutine_t对象
+	// 构造主线程的协程环境，主线程也看做一个特殊的协程
 	struct stCoRoutine_t *self = co_create_env( env, NULL, NULL,NULL );
 	self->cIsMain = 1;
 
@@ -784,9 +787,12 @@ void co_init_curr_thread_env()
 	coctx_init( &self->ctx );
 
         // 将当前线程协程全局环境中的调用栈首个协程设置为当前线主程
-	env->pCallStack[ env->iCallStackSize++ ] = self;
 
         // 创建当前线程的epoll，并设置到当前全局环境中(pEpoll对象)
+	// env 中的 0 号协程就是主线程咯
+	env->pCallStack[ env->iCallStackSize++ ] = self;
+
+	// 初始化当前线程调度协程的epoll并把主线程放进去
 	stCoEpoll_t *ev = AllocEpoll();
 	SetEpoll( env,ev );
 }

@@ -28,6 +28,7 @@
 struct stCoRoutine_t;
 struct stShareStack_t;
 
+// 协程属性，这里是共享栈的信息
 struct stCoRoutineAttr_t
 {
 	int stack_size;
@@ -44,21 +45,21 @@ typedef int (*pfn_co_eventloop_t)(void *);
 typedef void *(*pfn_co_routine_t)( void * );
 
 //2.co_routine
-
+// 封装了协程的创建，执行，切换，释放等操作
 int 	co_create( stCoRoutine_t **co,const stCoRoutineAttr_t *attr,void *(*routine)(void*),void *arg );
 void    co_resume( stCoRoutine_t *co );
 void    co_yield( stCoRoutine_t *co );
 void    co_yield_ct(); //ct = current thread
 void    co_release( stCoRoutine_t *co );
 void    co_reset(stCoRoutine_t * co); 
-// 获取当前线程获得执行权的协程
+// 获取当前执行的协程
 stCoRoutine_t *co_self();
-
-int	co_poll( stCoEpoll_t *ctx,struct pollfd fds[], nfds_t nfds, int timeout_ms );
+// 协程调度相关
+int		co_poll( stCoEpoll_t *ctx,struct pollfd fds[], nfds_t nfds, int timeout_ms );
 void 	co_eventloop( stCoEpoll_t *ctx,pfn_co_eventloop_t pfn,void *arg );
 
 //3.specific
-
+// 协程私有变量的实现，限制128个
 int 	co_setspecific( pthread_key_t key, const void *value );
 void *	co_getspecific( pthread_key_t key );
 
@@ -73,6 +74,7 @@ void 	co_disable_hook_sys();
 bool 	co_is_enable_sys_hook();
 
 //6.sync
+// 协程同步机制的实现
 struct stCoCond_t;
 
 stCoCond_t *co_cond_alloc();

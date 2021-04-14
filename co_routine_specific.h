@@ -41,10 +41,13 @@ int main()
 	return 0;
 }
 */
-// 单例模式模板
+// 在co_routine.cpp中实现
 extern int 	co_setspecific( pthread_key_t key, const void *value );
 extern void *	co_getspecific( pthread_key_t key );
 
+// 协程单例模式
+// 借用线程私有变量的实现，为每个协程运行环境维护一个key-value映射表，
+// 主线程直接使用系统的实现，协程则调用映射表
 #define CO_ROUTINE_SPECIFIC( name,y ) \
 \
 static pthread_once_t _routine_once_##name = PTHREAD_ONCE_INIT; \

@@ -23,7 +23,7 @@
 #include <string.h>
 
 #if !defined( __APPLE__ ) && !defined( __FreeBSD__ )
-
+// for Unix
 int	co_epoll_wait( int epfd,struct co_epoll_res *events,int maxevents,int timeout )
 {
 	return epoll_wait( epfd,events->events,maxevents,timeout );
@@ -56,12 +56,15 @@ void co_epoll_res_free( struct co_epoll_res * ptr )
 }
 
 #else
+// for ios
+// iOS没有现成的epoll吗，自己实现一个？
 class clsFdMap // million of fd , 1024 * 1024 
 {
 private:
 	static const int row_size = 1024;
 	static const int col_size = 1024;
 
+	// 这种声明有点容易误解，这其实是一个二维数组指针，对象类型是void*
 	void **m_pp[ 1024 ];
 public:
 	clsFdMap()
@@ -86,6 +89,7 @@ public:
 	}
 	inline int set( int fd,const void * ptr )
 	{
+		// 根据 描述符fd 去划分fd属于哪一列
 		int idx = fd / row_size;
 		if( idx < 0 || idx >= sizeof(m_pp)/sizeof(m_pp[0]) )
 		{
@@ -94,6 +98,7 @@ public:
 		}
 		if( !m_pp[ idx ] ) 
 		{
+			// 这一列第一次使用，需要构造出来
 			m_pp[ idx ] = (void**)calloc( 1,sizeof(void*) * col_size );
 		}
 		m_pp[ idx ][ fd % col_size ] = (void*)ptr;
@@ -113,6 +118,9 @@ public:
 	}
 };
 
+// 为什么每个线程私有?
+// libco 的时间循环是为了处理协程的调度，所以每个线程私有一个 fd 的map表
+// 或者是为了避免加锁
 __thread clsFdMap *s_fd_map = NULL;
 
 static inline clsFdMap *get_fd_map()

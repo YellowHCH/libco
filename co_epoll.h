@@ -27,7 +27,7 @@
 #include <time.h>
 
 #if !defined( __APPLE__ ) && !defined( __FreeBSD__ )
-
+// for Unix
 #include <sys/epoll.h>
 
 struct co_epoll_res
@@ -50,8 +50,9 @@ struct 	co_epoll_res *co_epoll_res_alloc( int n );
 void 	co_epoll_res_free( struct co_epoll_res * );
 
 #else
-
+// for Mac
 #include <sys/event.h>
+// 适配iOS的epoll
 enum EPOLL_EVENTS
 {
 	EPOLLIN = 0X001,

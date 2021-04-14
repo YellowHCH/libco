@@ -92,8 +92,9 @@ int coctx_init(coctx_t* ctx) {
 }
 int coctx_make(coctx_t* ctx, coctx_pfn_t pfn, const void* s, const void* s1) {
   // make room for coctx_param
+  // 栈从高到低生长, 需要注意的是生长指的是新获取的栈地址在旧的栈下面，但是一块栈内存本身还是往高处增长的
   char* sp = ctx->ss_sp + ctx->ss_size - sizeof(coctx_param_t);
-  sp = (char*)((unsigned long)sp & -16L);
+  sp = (char*)((unsigned long)sp & -16L); // 按long类型大小取整
 
   coctx_param_t* param = (coctx_param_t*)sp;
   void** ret_addr = (void**)(sp - sizeof(void*) * 2);
@@ -103,18 +104,20 @@ int coctx_make(coctx_t* ctx, coctx_pfn_t pfn, const void* s, const void* s1) {
 
   memset(ctx->regs, 0, sizeof(ctx->regs));
 
+  // 即fun的地址
   ctx->regs[kESP] = (char*)(sp) - sizeof(void*) * 2;
   return 0;
 }
 #elif defined(__x86_64__)
 int coctx_make(coctx_t* ctx, coctx_pfn_t pfn, const void* s, const void* s1) {
   char* sp = ctx->ss_sp + ctx->ss_size - sizeof(void*);
-  sp = (char*)((unsigned long)sp & -16LL);
+  sp = (char*)((unsigned long)sp & -16LL); // 64位系统按8字节对齐
 
   memset(ctx->regs, 0, sizeof(ctx->regs));
   void** ret_addr = (void**)(sp);
   *ret_addr = (void*)pfn;
 
+  // 64位系统的上下文的寄存器多一点东西
   ctx->regs[kRSP] = sp;
 
   ctx->regs[kRETAddr] = (char*)pfn;

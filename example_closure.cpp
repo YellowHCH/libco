@@ -60,6 +60,7 @@ int main( int argc,char *argv[] )
         // 此处ref对象对total,v2,m三个变量进行打包，提供给后面的闭包函数通过引用进行
         // 操作
         // 构造10个闭包往数组v2中添加数据
+	// class type_ref{...} ref(...) 
 	for(int i=0;i<10;i++)
 	{
 		co_func( f,ref,i )      // generate class f

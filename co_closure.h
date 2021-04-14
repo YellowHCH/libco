@@ -18,6 +18,7 @@
 
 #ifndef __CO_CLOSURE_H__
 #define __CO_CLOSURE_H__
+// 闭包，user打包好函数和参数到stCoClosure_t对象，闭包对象调用exec()接口即可
 struct stCoClosure_t 
 {
 public:
@@ -27,9 +28,9 @@ public:
 
 //1.base 
 //-- 1.1 comac_argc
-
 // get args number && join two string, at most 7 arguements
 #define comac_get_args_cnt( ... ) comac_arg_n( __VA_ARGS__ )
+// _0...是占位符, 
 #define comac_arg_n( _0,_1,_2,_3,_4,_5,_6,_7,N,...) N
 #define comac_args_seqs() 7,6,5,4,3,2,1,0
 #define comac_join_1( x,y ) x##y
@@ -76,7 +77,7 @@ public:\
 		repeat( comac_argc(__VA_ARGS__),param_init_typeof,__VA_ARGS__ ) _member_cnt(comac_argc(__VA_ARGS__)) \
 	{}\
 } name( __VA_ARGS__ ) ;
-
+// ref 是类的实例对象
 
 //2.2 function
 
