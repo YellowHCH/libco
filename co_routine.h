@@ -46,13 +46,42 @@ typedef void *(*pfn_co_routine_t)( void * );
 
 //2.co_routine
 // 封装了协程的创建，执行，切换，释放等操作
+/*
+ * co_create
+ * param:
+ *  --> co:     创建的协程对象的指针
+ *  --> attr:   创建的协程的属性，主要是共享栈相关
+ *  --> pfn:    协程执行的函数
+ *  --> arg:    协程执行函数的参数
+ * exec:
+ *  协程的创建包括栈内存的获取、初始化，绑定执行的函数，关联到当前线程，将协程上下文复制到栈内存，初始化一些协程属性
+ * */
 int 	co_create( stCoRoutine_t **co,const stCoRoutineAttr_t *attr,void *(*routine)(void*),void *arg );
+/*
+ * co_resume
+ * param:
+ *  --> co: 协程对象
+ * exec:
+ *  在线程栈恢复（执行）协程co，调用co_swap切换当前占用线程的协程 
+ * */
 void    co_resume( stCoRoutine_t *co );
+/*
+ * co_yield
+ * 切换这个协程所属的线程正在执行的协程
+ * co_yield_ct: 直接切换当前线程的协程
+ * */
 void    co_yield( stCoRoutine_t *co );
 void    co_yield_ct(); //ct = current thread
+/*
+ * 调用co_free释放协程对象，如果是私有栈那么直接释放内存，如果是共享栈则释放暂存的栈内存、断开共享栈的绑定
+ * */
 void    co_release( stCoRoutine_t *co );
+/*
+ * co_reset 重置超时的协程
+ * */
 void    co_reset(stCoRoutine_t * co); 
 // 获取当前执行的协程
+// cur_env->cur_co, iCallStackSize是当前线程栈待调度协程的数量，最后一个协程是正在执行的协程
 stCoRoutine_t *co_self();
 // 协程调度相关
 int		co_poll( stCoEpoll_t *ctx,struct pollfd fds[], nfds_t nfds, int timeout_ms );
