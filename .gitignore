@@ -39,3 +39,5 @@ cscope*
 GPATH
 GTAGS
 GRTAGS
+# vscode
+.vscode/
